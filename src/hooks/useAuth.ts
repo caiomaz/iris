@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { User } from '@/types/iris';
+import { useLocalStorage } from './useLocalStorage';
 
 export const useAuth = () => {
+  const [token, setToken] = useLocalStorage<string | null>('iris_token', null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Sync user state with token changes
   useEffect(() => {
-    // Simular verificação de autenticação
     const checkAuth = () => {
-      const token = localStorage.getItem('iris_token');
       if (token) {
         setUser({
           id: '1',
@@ -16,12 +17,14 @@ export const useAuth = () => {
           email: 'admin@iris.com',
           isAuthenticated: true
         });
+      } else {
+        setUser(null);
       }
       setIsLoading(false);
     };
 
     checkAuth();
-  }, []);
+  }, [token]);
 
   const login = async (username: string, password: string) => {
     setIsLoading(true);
@@ -31,15 +34,7 @@ export const useAuth = () => {
     
     // Simular autenticação
     if (username === 'admin' && password === 'admin') {
-      const userData = {
-        id: '1',
-        username: 'admin',
-        email: 'admin@iris.com',
-        isAuthenticated: true
-      };
-      
-      localStorage.setItem('iris_token', 'mock_token');
-      setUser(userData);
+      setToken('mock_token');
       setIsLoading(false);
       return { success: true };
     }
@@ -49,7 +44,7 @@ export const useAuth = () => {
   };
 
   const logout = () => {
-    localStorage.removeItem('iris_token');
+    setToken(null);
     setUser(null);
   };
 

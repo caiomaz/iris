@@ -8,13 +8,22 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
 export const LoginForm = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('admin');
   const { login, isLoading } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!username.trim() || !password.trim()) {
+      toast({
+        title: "Erro de validação",
+        description: "Por favor, preencha todos os campos",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
       const result = await login(username, password);
@@ -22,10 +31,9 @@ export const LoginForm = () => {
       if (result.success) {
         toast({
           title: "Login realizado com sucesso",
-          description: "Redirecionando para o dashboard...",
+          description: "Bem-vindo ao IRIS Dashboard!",
           variant: "default"
         });
-        // O redirecionamento será automático quando o estado de autenticação mudar
       } else {
         toast({
           title: "Erro de autenticação",
@@ -71,6 +79,7 @@ export const LoginForm = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Digite seu usuário"
                 required
+                disabled={isLoading}
               />
             </div>
             
@@ -86,6 +95,7 @@ export const LoginForm = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Digite sua senha"
                 required
+                disabled={isLoading}
               />
             </div>
             
@@ -94,7 +104,14 @@ export const LoginForm = () => {
               className="w-full bg-gradient-primary"
               disabled={isLoading}
             >
-              {isLoading ? 'Entrando...' : 'Entrar'}
+              {isLoading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
+                  <span>Entrando...</span>
+                </div>
+              ) : (
+                'Entrar'
+              )}
             </Button>
           </form>
           

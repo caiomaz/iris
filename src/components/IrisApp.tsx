@@ -13,7 +13,7 @@ export const IrisApp = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  // Inicializar dados de exemplo se necessário
+  // Inicializar dados de exemplo se necessário (só quando autenticado)
   useIrisData();
 
   // Reset tab quando logout
@@ -23,6 +23,7 @@ export const IrisApp = () => {
     }
   }, [isAuthenticated]);
 
+  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-eco flex items-center justify-center">
@@ -34,10 +35,12 @@ export const IrisApp = () => {
     );
   }
 
+  // Not authenticated - show login
   if (!isAuthenticated) {
     return <LoginForm />;
   }
 
+  // Authenticated - show main app
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
