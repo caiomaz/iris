@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* IRIS Design System - Sustentabilidade e Recursos 
+Cores inspiradas na natureza e sustentabilidade
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 158 42% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 158 42% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 158 42% 15%;
+
+    /* Verde sustentável como cor primária */
+    --primary: 158 64% 52%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 158 54% 62%;
+
+    /* Tons terrosos para secundário */
+    --secondary: 45 30% 92%;
+    --secondary-foreground: 158 42% 15%;
+
+    --muted: 45 20% 95%;
+    --muted-foreground: 158 15% 50%;
+
+    /* Azul água para accent */
+    --accent: 195 100% 95%;
+    --accent-foreground: 195 100% 25%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 158 20% 88%;
+    --input: 158 20% 88%;
+    --ring: 158 64% 52%;
+
+    /* Cores específicas para recursos */
+    --water: 195 100% 50%;
+    --energy: 45 100% 50%;
+    --gas: 25 100% 50%;
+    --waste: 0 60% 50%;
+    --compost: 120 60% 40%;
+
+    /* Gradientes sustentáveis */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-eco: linear-gradient(180deg, hsl(158 80% 95%), hsl(158 60% 85%));
+    --gradient-dashboard: linear-gradient(135deg, hsl(158 100% 98%), hsl(195 100% 98%));
+
+    /* Sombras elegantes */
+    --shadow-eco: 0 4px 20px hsl(var(--primary) / 0.15);
+    --shadow-card: 0 2px 10px hsl(158 20% 50% / 0.1);
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Transições e animações suaves */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 158 42% 8%;
+    --foreground: 158 20% 95%;
+
+    --card: 158 42% 10%;
+    --card-foreground: 158 20% 95%;
+
+    --primary: 158 54% 62%;
+    --primary-glow: 158 64% 72%;
+
+    --secondary: 158 20% 15%;
+    --secondary-foreground: 158 20% 95%;
+
+    --muted: 158 15% 12%;
+    --muted-foreground: 158 15% 65%;
+
+    --accent: 195 50% 15%;
+    --accent-foreground: 195 50% 85%;
+
+    --border: 158 20% 20%;
+    --input: 158 20% 20%;
+    --ring: 158 54% 62%;
+
+    --water: 195 100% 60%;
+    --energy: 45 100% 60%;
+    --gas: 25 100% 60%;
+    --waste: 0 60% 60%;
+    --compost: 120 60% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border transition-all duration-fast;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Scrollbar personalizada */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+
+  /* Animações personalizadas */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+  }
+}
