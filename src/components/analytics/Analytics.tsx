@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useResources } from '@/hooks/useResources';
 import { RESOURCE_CONFIG } from '@/types/iris';
 import { useState, useMemo } from 'react';
@@ -10,6 +11,17 @@ import { ptBR } from 'date-fns/locale';
 export const Analytics = () => {
   const { resources } = useResources();
   const [selectedPeriod, setSelectedPeriod] = useState('6'); // 6 meses
+  const [selectedIndicators, setSelectedIndicators] = useState<string[]>(
+    Object.keys(RESOURCE_CONFIG)
+  );
+
+  const handleIndicatorToggle = (indicator: string) => {
+    setSelectedIndicators(prev => 
+      prev.includes(indicator)
+        ? prev.filter(i => i !== indicator)
+        : [...prev, indicator]
+    );
+  };
 
   const analyticsData = useMemo(() => {
     const months = parseInt(selectedPeriod);
@@ -23,7 +35,7 @@ export const Analytics = () => {
       const monthData = {
         month: format(date, 'MMM/yyyy', { locale: ptBR }),
         ...Object.fromEntries(
-          Object.keys(RESOURCE_CONFIG).map(type => [
+          selectedIndicators.map(type => [
             type,
             resources
               .filter(r => 
@@ -40,19 +52,20 @@ export const Analytics = () => {
     }
     
     return data;
-  }, [resources, selectedPeriod]);
+  }, [resources, selectedPeriod, selectedIndicators]);
 
   const totalData = useMemo(() => {
-    return Object.entries(RESOURCE_CONFIG).map(([type, config]) => ({
-      name: config.label,
-      value: resources
-        .filter(r => r.type === type)
-        .reduce((sum, r) => sum + r.value, 0),
-      color: `hsl(var(--${config.color}))`
-    })).filter(item => item.value > 0);
-  }, [resources]);
-
-  const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
+    return selectedIndicators.map((type, index) => {
+      const config = RESOURCE_CONFIG[type as keyof typeof RESOURCE_CONFIG];
+      return {
+        name: config.label,
+        value: resources
+          .filter(r => r.type === type)
+          .reduce((sum, r) => sum + r.value, 0),
+        color: config.color
+      };
+    }).filter(item => item.value > 0);
+  }, [resources, selectedIndicators]);
 
   return (
     <div className="space-y-6">
@@ -70,63 +83,99 @@ export const Analytics = () => {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="shadow-card-eco">
-          <CardHeader>
-            <CardTitle>Tendência Mensal</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={analyticsData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip 
-                  formatter={(value: number, name: string) => [
-                    value.toLocaleString(),
-                    RESOURCE_CONFIG[name as keyof typeof RESOURCE_CONFIG]?.label || name
-                  ]}
+      <Card className="shadow-card-eco">
+        <CardHeader>
+          <CardTitle>Indicadores a Exibir</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {Object.entries(RESOURCE_CONFIG).map(([type, config]) => (
+              <div key={type} className="flex items-center space-x-2">
+                <Checkbox
+                  id={type}
+                  checked={selectedIndicators.includes(type)}
+                  onCheckedChange={() => handleIndicatorToggle(type)}
                 />
-                {Object.entries(RESOURCE_CONFIG).map(([type, config], index) => (
-                  <Bar
-                    key={type}
-                    dataKey={type}
-                    fill={COLORS[index % COLORS.length]}
-                    name={config.label}
-                  />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card-eco">
-          <CardHeader>
-            <CardTitle>Distribuição Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
-              <PieChart>
-                <Pie
-                  data={totalData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={120}
-                  fill="#8884d8"
-                  dataKey="value"
+                <label
+                  htmlFor={type}
+                  className="flex items-center space-x-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                 >
-                  {totalData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value: number) => [value.toLocaleString(), 'Total']} />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+                  <span>{config.icon}</span>
+                  <span>{config.label}</span>
+                </label>
+              </div>
+            ))}
+          </div>
+          {selectedIndicators.length === 0 && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Selecione pelo menos um indicador para visualizar os gráficos.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {selectedIndicators.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="shadow-card-eco">
+            <CardHeader>
+              <CardTitle>Tendência Mensal</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={analyticsData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip 
+                    formatter={(value: number, name: string) => [
+                      value.toLocaleString(),
+                      RESOURCE_CONFIG[name as keyof typeof RESOURCE_CONFIG]?.label || name
+                    ]}
+                  />
+                  {selectedIndicators.map((type) => {
+                    const config = RESOURCE_CONFIG[type as keyof typeof RESOURCE_CONFIG];
+                    return (
+                      <Bar
+                        key={type}
+                        dataKey={type}
+                        fill={config.color}
+                        name={config.label}
+                      />
+                    );
+                  })}
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card-eco">
+            <CardHeader>
+              <CardTitle>Distribuição Total</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <PieChart>
+                  <Pie
+                    data={totalData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={120}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {totalData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => [value.toLocaleString(), 'Total']} />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Card className="shadow-card-eco">
         <CardHeader>
@@ -134,7 +183,8 @@ export const Analytics = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {Object.entries(RESOURCE_CONFIG).map(([type, config]) => {
+            {selectedIndicators.map((type) => {
+              const config = RESOURCE_CONFIG[type as keyof typeof RESOURCE_CONFIG];
               const typeRecords = resources.filter(r => r.type === type);
               const total = typeRecords.reduce((sum, r) => sum + r.value, 0);
               const average = typeRecords.length > 0 ? total / typeRecords.length : 0;

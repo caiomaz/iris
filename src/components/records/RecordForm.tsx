@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,16 +13,36 @@ import { format } from 'date-fns';
 interface RecordFormProps {
   editingRecord?: ResourceRecord;
   onSave?: () => void;
+  onCancel?: () => void;
 }
 
-export const RecordForm = ({ editingRecord, onSave }: RecordFormProps) => {
-  const [type, setType] = useState<ResourceRecord['type']>(editingRecord?.type || 'water');
-  const [value, setValue] = useState(editingRecord?.value?.toString() || '');
-  const [date, setDate] = useState(editingRecord?.date || format(new Date(), 'yyyy-MM-dd'));
-  const [description, setDescription] = useState(editingRecord?.description || '');
+export const RecordForm = ({ editingRecord, onSave, onCancel }: RecordFormProps) => {
+  const [type, setType] = useState<ResourceRecord['type']>('water');
+  const [value, setValue] = useState('');
+  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [description, setDescription] = useState('');
 
   const { createResource, updateResource } = useResources();
   const { toast } = useToast();
+
+  // Reset form when editingRecord changes
+  useEffect(() => {
+    if (editingRecord) {
+      setType(editingRecord.type);
+      setValue(editingRecord.value.toString());
+      setDate(editingRecord.date);
+      setDescription(editingRecord.description || '');
+    } else {
+      resetForm();
+    }
+  }, [editingRecord]);
+
+  const resetForm = () => {
+    setType('water');
+    setValue('');
+    setDate(format(new Date(), 'yyyy-MM-dd'));
+    setDescription('');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,13 +77,7 @@ export const RecordForm = ({ editingRecord, onSave }: RecordFormProps) => {
           title: "Sucesso", 
           description: "Registro criado com sucesso"
         });
-      }
-
-      // Reset form if creating new record
-      if (!editingRecord) {
-        setValue('');
-        setDescription('');
-        setDate(format(new Date(), 'yyyy-MM-dd'));
+        resetForm();
       }
       
       onSave?.();
@@ -76,11 +90,21 @@ export const RecordForm = ({ editingRecord, onSave }: RecordFormProps) => {
     }
   };
 
+  const handleCancel = () => {
+    resetForm();
+    onCancel?.();
+  };
+
   return (
     <Card className="shadow-card-eco">
       <CardHeader>
-        <CardTitle>
+        <CardTitle className="flex items-center justify-between">
           {editingRecord ? 'Editar Registro' : 'Novo Registro'}
+          {editingRecord && (
+            <Button variant="outline" size="sm" onClick={handleCancel} type="button">
+              Cancelar
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -145,9 +169,16 @@ export const RecordForm = ({ editingRecord, onSave }: RecordFormProps) => {
             />
           </div>
 
-          <Button type="submit" className="w-full bg-gradient-primary">
-            {editingRecord ? 'Atualizar' : 'Criar'} Registro
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" className="flex-1 bg-gradient-primary">
+              {editingRecord ? 'Atualizar' : 'Criar'} Registro
+            </Button>
+            {editingRecord && (
+              <Button type="button" variant="outline" onClick={handleCancel}>
+                Cancelar
+              </Button>
+            )}
+          </div>
         </form>
       </CardContent>
     </Card>

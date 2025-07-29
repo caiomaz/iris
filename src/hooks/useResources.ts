@@ -1,10 +1,19 @@
 import { useState, useEffect } from 'react';
 import { ResourceRecord, AuditLog } from '@/types/iris';
 import { useLocalStorage } from './useLocalStorage';
+import { generateSampleData } from '@/utils/sampleData';
 
 export const useResources = () => {
   const [resources, setResources] = useLocalStorage<ResourceRecord[]>('iris_resources', []);
   const [auditLogs, setAuditLogs] = useLocalStorage<AuditLog[]>('iris_audit_logs', []);
+
+  // Initialize with sample data if no data exists
+  useEffect(() => {
+    if (resources.length === 0) {
+      const sampleData = generateSampleData();
+      createResourcesBatch(sampleData);
+    }
+  }, []);
 
   const addAuditLog = (action: AuditLog['action'], resourceId: string, resourceType: string, oldValues?: any, newValues?: any) => {
     const log: AuditLog = {
@@ -33,6 +42,24 @@ export const useResources = () => {
     addAuditLog('CREATE', newResource.id, newResource.type, undefined, newResource);
     
     return newResource;
+  };
+
+  const createResourcesBatch = (dataArray: Omit<ResourceRecord, 'id' | 'createdAt' | 'updatedAt'>[]) => {
+    const newResources: ResourceRecord[] = dataArray.map((data, index) => ({
+      ...data,
+      id: (Date.now() + index).toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }));
+
+    setResources(prev => [...newResources, ...prev]);
+    
+    // Add audit logs for batch creation
+    newResources.forEach(resource => {
+      addAuditLog('CREATE', resource.id, resource.type, undefined, resource);
+    });
+    
+    return newResources;
   };
 
   const updateResource = (id: string, data: Partial<ResourceRecord>) => {
@@ -73,6 +100,7 @@ export const useResources = () => {
     resources,
     auditLogs,
     createResource,
+    createResourcesBatch,
     updateResource,
     deleteResource,
     getResourcesByType,

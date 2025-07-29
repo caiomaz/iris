@@ -52,32 +52,32 @@ export interface DashboardStats {
 export const RESOURCE_CONFIG = {
   water: {
     label: 'Água',
-    unit: 'L',
-    color: 'water',
+    unit: 'm³',
+    color: '#1151a0ff',
     icon: '💧'
   },
   energy: {
     label: 'Energia',
     unit: 'kWh',
-    color: 'energy',
+    color: '#ffbc13ff',
     icon: '⚡'
   },
   gas: {
     label: 'Gás',
     unit: 'm³',
-    color: 'gas',
+    color: '#ff2344ff',
     icon: '🔥'
   },
   waste: {
     label: 'Resíduos',
     unit: 'kg',
-    color: 'waste',
+    color: '#8a006cff',
     icon: '🗑️'
   },
   compost: {
     label: 'Composto',
     unit: 'kg',
-    color: 'compost',
+    color: '#006e12ff',
     icon: '🌱'
   }
 } as const;

@@ -1,36 +1,40 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { ResourceRecord, RESOURCE_CONFIG } from '@/types/iris';
 import { useMemo } from 'react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface ResourceChartProps {
   title: string;
   data: ResourceRecord[];
+  types: ResourceRecord['type'][];
+  chartType?: 'line' | 'bar';
 }
 
-export const ResourceChart = ({ title, data }: ResourceChartProps) => {
+export const ResourceChart = ({ title, data, types, chartType = 'line' }: ResourceChartProps) => {
   const chartData = useMemo(() => {
-    // Agrupar dados por data e tipo
-    const groupedData = data.reduce((acc, record) => {
-      const date = record.date;
-      if (!acc[date]) {
-        acc[date] = { date };
-      }
-      acc[date][record.type] = (acc[date][record.type] || 0) + record.value;
-      return acc;
-    }, {} as Record<string, any>);
+    // Agrupar dados por mês
+    const monthlyData = data
+      .filter(record => types.includes(record.type))
+      .reduce((acc, record) => {
+        const date = parseISO(record.date);
+        const monthKey = format(startOfMonth(date), 'yyyy-MM');
+        const monthLabel = format(startOfMonth(date), 'MMM/yyyy', { locale: ptBR });
+        
+        if (!acc[monthKey]) {
+          acc[monthKey] = { month: monthLabel, date: monthKey };
+        }
+        
+        acc[monthKey][record.type] = (acc[monthKey][record.type] || 0) + record.value;
+        return acc;
+      }, {} as Record<string, any>);
 
     // Converter para array e ordenar por data
-    return Object.values(groupedData)
+    return Object.values(monthlyData)
       .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(-30); // Últimos 30 registros
-  }, [data]);
-
-  const uniqueTypes = useMemo(() => {
-    return Array.from(new Set(data.map(r => r.type)));
-  }, [data]);
+      .slice(-12); // Últimos 12 meses
+  }, [data, types]);
 
   const getColorForType = (type: string) => {
     const colors = {
@@ -43,12 +47,9 @@ export const ResourceChart = ({ title, data }: ResourceChartProps) => {
     return colors[type as keyof typeof colors] || '#6b7280';
   };
 
-  const formatTooltipDate = (date: string) => {
-    try {
-      return format(parseISO(date), 'dd/MM/yyyy', { locale: ptBR });
-    } catch {
-      return date;
-    }
+  const formatTooltipValue = (value: number, type: string) => {
+    const config = RESOURCE_CONFIG[type as keyof typeof RESOURCE_CONFIG];
+    return `${value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ${config?.unit || ''}`;
   };
 
   if (chartData.length === 0) {
@@ -66,6 +67,8 @@ export const ResourceChart = ({ title, data }: ResourceChartProps) => {
     );
   }
 
+  const ChartComponent = chartType === 'bar' ? BarChart : LineChart;
+
   return (
     <Card className="shadow-card-eco">
       <CardHeader>
@@ -73,33 +76,41 @@ export const ResourceChart = ({ title, data }: ResourceChartProps) => {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
+          <ChartComponent data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis 
-              dataKey="date" 
+              dataKey="month" 
               tick={{ fontSize: 12 }}
-              tickFormatter={(date) => format(parseISO(date), 'dd/MM')}
             />
             <YAxis tick={{ fontSize: 12 }} />
             <Tooltip 
-              labelFormatter={(date) => formatTooltipDate(date as string)}
               formatter={(value: number, name: string) => [
-                `${value.toLocaleString()} ${RESOURCE_CONFIG[name as keyof typeof RESOURCE_CONFIG]?.unit || ''}`,
+                formatTooltipValue(value, name),
                 RESOURCE_CONFIG[name as keyof typeof RESOURCE_CONFIG]?.label || name
               ]}
             />
-            {uniqueTypes.map((type) => (
-              <Line
-                key={type}
-                type="monotone"
-                dataKey={type}
-                stroke={getColorForType(type)}
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                connectNulls={false}
-              />
+            {types.map((type) => (
+              chartType === 'bar' ? (
+                <Bar
+                  key={type}
+                  dataKey={type}
+                  fill={getColorForType(type)}
+                  name={type}
+                />
+              ) : (
+                <Line
+                  key={type}
+                  type="monotone"
+                  dataKey={type}
+                  stroke={getColorForType(type)}
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  connectNulls={false}
+                  name={type}
+                />
+              )
             ))}
-          </LineChart>
+          </ChartComponent>
         </ResponsiveContainer>
       </CardContent>
     </Card>

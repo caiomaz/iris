@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { RecordForm } from './RecordForm';
-import { RecordList } from './RecordList';
+import { RecordForm } from '@/components/records/RecordForm';
+import { RecordList } from '@/components/records/RecordList';
 import { ResourceRecord } from '@/types/iris';
 
-export const RecordsManagement = () => {
+export const Records = () => {
   const [editingRecord, setEditingRecord] = useState<ResourceRecord | undefined>();
 
   const handleEdit = (record: ResourceRecord) => {
@@ -21,7 +21,7 @@ export const RecordsManagement = () => {
   return (
     <div className="space-y-6">
       <RecordForm 
-        editingRecord={editingRecord} 
+        editingRecord={editingRecord}
         onSave={handleSave}
         onCancel={handleCancel}
       />

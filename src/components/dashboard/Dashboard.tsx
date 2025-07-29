@@ -5,9 +5,19 @@ import { RESOURCE_CONFIG } from '@/types/iris';
 import { useMemo } from 'react';
 
 export const Dashboard = () => {
-  const { resources } = useResources();
+  const { resources, loading, error } = useResources();
 
   const stats = useMemo(() => {
+    if (!resources || resources.length === 0) {
+      return {
+        water: { current: 0, previous: 0, total: 0 },
+        energy: { current: 0, previous: 0, total: 0 },
+        gas: { current: 0, previous: 0, total: 0 },
+        waste: { current: 0, previous: 0, total: 0 },
+        compost: { current: 0, previous: 0, total: 0 }
+      };
+    }
+
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
@@ -45,6 +55,22 @@ export const Dashboard = () => {
     };
   }, [resources]);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Carregando dados...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-red-500">Erro ao carregar dados: {error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
@@ -61,12 +87,31 @@ export const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ResourceChart 
-          title="Consumo de Recursos"
-          data={resources.filter(r => ['water', 'energy', 'gas'].includes(r.type))}
+          title="Consumo de Água (m³)"
+          data={resources}
+          types={['water']}
+          chartType="bar"
         />
         <ResourceChart 
-          title="Geração de Resíduos e Composto"
-          data={resources.filter(r => ['waste', 'compost'].includes(r.type))}
+          title="Consumo de Energia (kWh)"
+          data={resources}
+          types={['energy']}
+          chartType="line"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ResourceChart 
+          title="Consumo de Gás (m³)"
+          data={resources}
+          types={['gas']}
+          chartType="line"
+        />
+        <ResourceChart 
+          title="Resíduos e Composto (kg)"
+          data={resources}
+          types={['waste', 'compost']}
+          chartType="bar"
         />
       </div>
     </div>
